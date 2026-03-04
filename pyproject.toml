@@ -5,8 +5,10 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "catboost>=1.2.10",
     "graphviz>=0.21",
     "ipykernel>=7.1.0",
+    "lightgbm>=4.6.0",
     "matplotlib>=3.10.8",
     "numpy>=1.26.4",
     "pandas>=3.0.0",
@@ -17,4 +19,5 @@ dependencies = [
     "torch>=2.10.0",
     "torchvision>=0.25.0",
     "tqdm>=4.67.2",
+    "xgboost>=3.2.0",
 ]

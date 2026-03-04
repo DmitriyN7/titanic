@@ -13,7 +13,7 @@
 
 | Approach | CV  | CV STD | LB  | Date |
 | -------- | --- | ------ | --- | ---- |
-|          |     |        |     |      |
+| LinearRegression         |     |        |     |      |
 
 ### Annotations
 
