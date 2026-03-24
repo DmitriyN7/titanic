@@ -22,7 +22,7 @@ def build_features(train_path="train.csv", test_path="test.csv"):
 
     data = pd.concat([train, test], ignore_index=True)
 
-    # --- Title ---
+    # extract passenger title from name
     data["Salut"] = data["Name"].str.extract(r"([A-Za-z]+)\.", expand=False)
     title_map = {
         "Mr": "Mr",
@@ -46,7 +46,7 @@ def build_features(train_path="train.csv", test_path="test.csv"):
     }
     data["Salut"] = data["Salut"].map(title_map).fillna("Mr")
 
-    # --- Fill NA ---
+    # fill missing values in core columns
     data["Embarked"] = data["Embarked"].fillna("S")
     data["Fare"] = data["Fare"].fillna(data["Fare"].median())
 
@@ -54,11 +54,11 @@ def build_features(train_path="train.csv", test_path="test.csv"):
     data["Age"] = data["Age"].fillna(data["Salut"].map(age_map))
     data["Age"] = data["Age"].fillna(data["Age"].median())
 
-    # --- Core engineered features ---
+    # core engineered features
     data["Deck"] = data["Cabin"].fillna("U").astype(str).str[0]
 
-    data["Family_size"] = (data["SibSp"] + data["Parch"]).astype(np.int64)  # как было
-    data["FamilySizePlus"] = (data["Family_size"] + 1).astype(np.int64)  # +1 часто лучше
+    data["Family_size"] = (data["SibSp"] + data["Parch"]).astype(np.int64)
+    data["FamilySizePlus"] = (data["Family_size"] + 1).astype(np.int64)
     data["Alone"] = (data["Family_size"] == 0).astype(np.int64)
 
     ticket_counts = data["Ticket"].value_counts()
@@ -70,7 +70,7 @@ def build_features(train_path="train.csv", test_path="test.csv"):
     data["IsChild"] = (data["Age"] < 16).astype(np.int64)
     data["AgeClass"] = (data["Age"] * data["Pclass"]).astype(np.float32)
 
-    # --- Categorical encoding for "numeric" models ---
+    # categorical encoding for numeric models
     data["Sex_num"] = data["Sex"].map({"male": 0, "female": 1}).astype(np.int64)
     data["Embarked_num"] = data["Embarked"].map({"S": 0, "C": 1, "Q": 2}).fillna(0).astype(np.int64)
     data["Salut_num"] = (
@@ -80,7 +80,7 @@ def build_features(train_path="train.csv", test_path="test.csv"):
     deck_map = {k: i for i, k in enumerate(list("ABCDEFG") + ["T", "U"])}
     data["Deck_num"] = data["Deck"].map(deck_map).fillna(deck_map["U"]).astype(np.int64)
 
-    # --- Two feature sets: for CatBoost (keep strings) and for sklearn (all numeric) ---
+    # build feature sets for CatBoost (categorical strings) and sklearn/XGBoost (numeric only)
     features_cb = [
         "Pclass",
         "Sex",
@@ -179,8 +179,7 @@ def make_submission_stack_logreg(X_train_num, y, X_test_num, pid_test, out_path)
         estimators=estimators,
         final_estimator=final_est,
         cv=skf5,
-        passthrough=False,  # часто лучше на Titanic
-        n_jobs=1,  # важный фикс, см. ниже
+        passthrough=False,
     )
 
     stack.fit(X_train_num, y)
@@ -266,7 +265,7 @@ def make_submission_blend(X_train_num, X_train_cb, y, X_test_num, X_test_cb, pid
     knn.fit(X_train_num, y)
     p_knn = knn.predict_proba(X_test_num)[:, 1]
 
-    # Blend (подкрути веса)
+    # weighted blend
     proba = 0.50 * p_cat + 0.35 * p_xgb + 0.15 * p_knn
     pred = (proba >= 0.5).astype(int)
 
